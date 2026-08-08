@@ -1,6 +1,19 @@
 # Changelog
 
-## [0.1.0-beta.2-wip]
+## [0.2.0-wip]
+
+### Changed
+
+- `flutter_secure_storage` constraint widened to `>=9.0.0 <12.0.0`
+  (verified against 9.2.4 and 11.0.0).
+- `storage.*` attribute keys are now the exported
+  `SecureStorageSemantics` enum (`OTelSemantic`) instead of raw
+  string literals. Emitted keys are unchanged.
+
+### Added
+
+- `example/example.md`.
+- Dartdoc for the suppression API.
 
 ## [0.1.0-beta.1] - 2026-05-16
 

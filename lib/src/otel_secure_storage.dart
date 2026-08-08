@@ -4,6 +4,7 @@
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'secure_storage_semantics.dart';
 import 'secure_storage_suppression.dart';
 
 const _tracerName = 'otel_flutter_secure_storage';
@@ -28,9 +29,9 @@ Future<R> tracedSecureStorageCall<R>({
         : 'secure_storage $operation $key',
     kind: SpanKind.client,
     attributes: OTel.attributesFromMap(<String, Object>{
-      'storage.system': _storageSystem,
-      'storage.operation': operation,
-      if (key != null) 'storage.key': key,
+      SecureStorageSemantics.system.key: _storageSystem,
+      SecureStorageSemantics.operation.key: operation,
+      if (key != null) SecureStorageSemantics.storageKey.key: key,
     }),
   );
   try {
@@ -38,7 +39,7 @@ Future<R> tracedSecureStorageCall<R>({
   } catch (e, st) {
     span.addAttributes(OTel.attributes([
       OTel.attributeString(
-        ErrorResource.errorType.key,
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));

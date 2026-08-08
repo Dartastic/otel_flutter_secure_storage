@@ -5,4 +5,5 @@
 library;
 
 export 'src/otel_secure_storage.dart';
+export 'src/secure_storage_semantics.dart';
 export 'src/secure_storage_suppression.dart';
