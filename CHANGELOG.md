@@ -2,6 +2,17 @@
 
 ## [0.3.0-wip]
 
+### Fixed
+
+- `tracedSecureStorageCall` (and every `traced*` extension method) no
+  longer throws when the OTel SDK is not initialized. The span is now
+  optional: the secure-storage operation always runs and its result —
+  or its error — always reaches the caller. Previously
+  `OTel.tracerProvider()` threw
+  `StateError: OTel.initialize() must be called first.` *before* the
+  wrapped operation, so a `tracedWrite` of a session token silently
+  never happened.
+
 ## [0.2.0] - 2026-08-10
 
 ### Changed
