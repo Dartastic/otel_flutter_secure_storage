@@ -4,6 +4,7 @@
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'otel_guard.dart';
 import 'secure_storage_semantics.dart';
 import 'secure_storage_suppression.dart';
 
@@ -17,37 +18,51 @@ Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
 /// `storage.system=flutter_secure_storage`,
 /// `storage.operation=<operation>`, and `storage.key=<key>` (when
 /// supplied). **Never records the value.**
+///
+/// [invoke] always runs, and its result (or its error) always reaches
+/// the caller. When the OTel SDK is not initialized — an unreachable
+/// collector on a phone, a build flavour that skips
+/// `OTel.initialize()`, or initialization still in flight — the span is
+/// skipped and the storage operation proceeds untraced. Secure storage
+/// holds session credentials; losing a write because telemetry was not
+/// ready would sign the user out.
 Future<R> tracedSecureStorageCall<R>({
   required String operation,
   String? key,
   required Future<R> Function() invoke,
 }) async {
   if (secureStorageInstrumentationSuppressed()) return invoke();
-  final span = _tracer().startSpan(
-    key == null
-        ? 'secure_storage $operation'
-        : 'secure_storage $operation $key',
-    kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(<String, Object>{
-      SecureStorageSemantics.system.key: _storageSystem,
-      SecureStorageSemantics.operation.key: operation,
-      if (key != null) SecureStorageSemantics.storageKey.key: key,
-    }),
+  final span = tryTelemetry(
+    () => _tracer().startSpan(
+      key == null
+          ? 'secure_storage $operation'
+          : 'secure_storage $operation $key',
+      kind: SpanKind.client,
+      attributes: OTel.attributesFromMap(<String, Object>{
+        SecureStorageSemantics.system.key: _storageSystem,
+        SecureStorageSemantics.operation.key: operation,
+        if (key != null) SecureStorageSemantics.storageKey.key: key,
+      }),
+    ),
   );
+  if (span == null) return invoke();
   try {
     return await invoke();
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorAttributes.errorType.key,
-        e.runtimeType.toString(),
-      ),
-    ]));
-    span.recordException(e, stackTrace: st);
-    span.setStatus(SpanStatusCode.Error, e.toString());
+    tryTelemetryEffect(() {
+      span
+        ..addAttributes(OTel.attributes([
+          OTel.attributeString(
+            ErrorAttributes.errorType.key,
+            e.runtimeType.toString(),
+          ),
+        ]))
+        ..recordException(e, stackTrace: st)
+        ..setStatus(SpanStatusCode.Error, e.toString());
+    });
     rethrow;
   } finally {
-    span.end();
+    tryTelemetryEffect(span.end);
   }
 }
 

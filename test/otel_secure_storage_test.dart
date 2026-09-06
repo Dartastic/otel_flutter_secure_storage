@@ -107,4 +107,47 @@ void main() {
       expect(exporter.spans, isEmpty);
     });
   });
+
+  // Regression: instrumentation must never be in the functional path.
+  // Before the guard, `_tracer()` threw
+  // `StateError: OTel.initialize() must be called first.` before
+  // `invoke()` ever ran, so a wrapped secure-storage write silently did
+  // not happen — session tokens were never persisted.
+  group('OTel SDK not initialized', () {
+    setUp(() async {
+      await OTel.reset();
+    });
+
+    test('tracedSecureStorageCall still runs the operation', () async {
+      var ran = false;
+      await tracedSecureStorageCall<void>(
+        operation: 'write',
+        key: 'auth.token',
+        invoke: () async {
+          ran = true;
+        },
+      );
+      expect(ran, isTrue);
+    });
+
+    test('tracedSecureStorageCall returns the operation result', () async {
+      final value = await tracedSecureStorageCall<String?>(
+        operation: 'read',
+        key: 'auth.token',
+        invoke: () async => 'token',
+      );
+      expect(value, equals('token'));
+    });
+
+    test('an error from the operation still reaches the caller', () async {
+      await expectLater(
+        tracedSecureStorageCall<void>(
+          operation: 'read',
+          key: 'auth.token',
+          invoke: () async => throw const FormatException('keychain locked'),
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
 }
