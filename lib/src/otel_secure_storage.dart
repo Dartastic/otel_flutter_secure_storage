@@ -1,7 +1,7 @@
 // Licensed under the Apache License, Version 2.0
 // Copyright 2025, Mindful Software LLC, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'secure_storage_semantics.dart';
@@ -10,7 +10,7 @@ import 'secure_storage_suppression.dart';
 const _tracerName = 'otel_flutter_secure_storage';
 const _storageSystem = 'flutter_secure_storage';
 
-Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
+APITracer _tracer() => OTelAPI.tracerProvider().getTracer(_tracerName);
 
 /// Generic helper. Opens a CLIENT span named
 /// `secure_storage <operation> [<key>]` carrying
@@ -28,7 +28,7 @@ Future<R> tracedSecureStorageCall<R>({
         ? 'secure_storage $operation'
         : 'secure_storage $operation $key',
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(<String, Object>{
+    attributes: OTelAPI.attributesFromMap(<String, Object>{
       SecureStorageSemantics.system.key: _storageSystem,
       SecureStorageSemantics.operation.key: operation,
       if (key != null) SecureStorageSemantics.storageKey.key: key,
@@ -37,8 +37,8 @@ Future<R> tracedSecureStorageCall<R>({
   try {
     return await invoke();
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
         ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
