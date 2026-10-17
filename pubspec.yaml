@@ -1,7 +1,8 @@
 name: otel_flutter_secure_storage
-description: OpenTelemetry instrumentation for
-  `package:flutter_secure_storage`. Wraps secure-storage reads / writes
-  with key-aware spans, NEVER recording the value (credentials).
+description: >-
+  OpenTelemetry instrumentation for flutter_secure_storage by Dartastic.io.
+  Adds standard OpenTelemetry observability to applications that use
+  flutter_secure_storage.
 version: 0.3.1-wip
 repository: https://github.com/dartastic/otel_flutter_secure_storage
 homepage: https://dartastic.io
