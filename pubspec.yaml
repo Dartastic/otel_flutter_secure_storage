@@ -3,7 +3,7 @@ description: >-
   OpenTelemetry instrumentation for flutter_secure_storage by Dartastic.io.
   Adds standard OpenTelemetry observability to applications that use
   flutter_secure_storage.
-version: 0.3.1-wip
+version: 0.3.1
 repository: https://github.com/dartastic/otel_flutter_secure_storage
 homepage: https://dartastic.io
 
